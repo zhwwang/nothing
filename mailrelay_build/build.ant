@@ -1,0 +1,17 @@
+<project name="mailrelay" default="packageJar">
+	<description>mailrelay program</description>
+
+	<path id="compile.classpath">
+		<fileset dir="release">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="../mailrelay_common/lib">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="packageJar">
+	   <ant antfile="build_common.ant"/>
+	   <ant antfile="build_spam.ant"/>
+	</target>
+</project>

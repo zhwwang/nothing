@@ -1,0 +1,36 @@
+<project name="mailrelay" default="package_spam">
+	<description>mailrelay filter program</description>
+
+	<path id="compile.classpath">
+		<fileset dir="release">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="../mailrelay_common/lib">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="init" depends="clean" description="Create the output directories">
+		<mkdir dir="../mailrelay_spam/build/classes" />
+		<mkdir dir="release" />
+	</target>
+
+	<target name="compile_spam" depends="init" description="Compiles mailrelay_spam">
+		<javac srcdir="../mailrelay_spam/src" debug="true" destdir="../mailrelay_spam/build/classes" includeantruntime="false" encoding="UTF-8">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+
+	<target name="package_spam" depends="compile_spam" description="Creates mailrelay_spam JAR package files">
+		<jar destfile="release/mrspam.jar" basedir="../mailrelay_spam/build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="cn.com.aboobear.spam.Engine" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="clean" description="Delete the output directories">
+		<delete dir="../mailrelay_spam/build/classes" />
+		<delete file="release/mrspam.jar" />
+	</target>
+</project>

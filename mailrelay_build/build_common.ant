@@ -1,0 +1,55 @@
+<project name="mailrelay" default="package_mrcommon">
+	<description>mailrelay program</description>
+
+	<path id="compile.classpath">
+		<fileset dir="release">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="../mailrelay_common/lib">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="init" depends="clean" description="Create the output directories">
+		<mkdir dir="../javax.mail/build/classes" />
+		<mkdir dir="../mailrelay_common/build/classes" />
+		<mkdir dir="release" />
+	</target>
+
+	<target name="compile_javax.mail" depends="init" description="Compiles javax.mail">
+		<javac srcdir="../javax.mail/src" debug="true" destdir="../javax.mail/build/classes" includeantruntime="false" encoding="UTF-8">
+		</javac>
+	</target>
+
+	<target name="package_javax.mail" depends="compile_javax.mail" description="Creates javax.mail JAR package files">
+		<copy todir="../javax.mail/build/classes/META-INF">
+			<fileset dir="../javax.mail/META-INF" />
+		</copy>
+		<jar destfile="release/javax.mail.jar" basedir="../javax.mail/build/classes" manifest="../javax.mail/META-INF/MANIFEST.MF">
+		</jar>
+	</target>
+
+	<target name="compile_mrcommon" depends="package_javax.mail" description="Compiles mrcommon">
+		<javac srcdir="../mailrelay_common/src" debug="true" destdir="../mailrelay_common/build/classes" includeantruntime="false" encoding="UTF-8">
+			<classpath refid="compile.classpath" />
+		</javac>
+	</target>
+
+	<target name="package_mrcommon" depends="compile_mrcommon" description="Creates mrcommon JAR package files">
+		<jar destfile="release/mrcommon.jar" basedir="../mailrelay_common/build/classes">
+		</jar>
+	</target>
+
+	<target name="proguard" depends="package_mrcommon">
+		<exec executable="cmd.exe">
+			<arg line="/c proguard.bat" />
+		</exec>
+	</target>
+
+	<target name="clean" description="Delete the output directories">
+		<delete dir="../javax.mail/build/classes" />
+		<delete dir="../mailrelay_common/build/classes" />
+		<delete file="release/javax.mail.jar" />
+		<delete file="release/mrcommon.jar" />
+	</target>
+</project>
