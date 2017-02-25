@@ -22,7 +22,9 @@ public class Engine {
 	public static Connection connection;
 
 	public static Thread socketThread = null;
-	public static ServerSocket server = null;
+	public static ServerSocket server = null;	
+
+	public static SpamMgrThread spammgrth = null;
 	
 	public static DateFormat dateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm:ss");
@@ -160,6 +162,31 @@ public class Engine {
 		}
 	}
 
+	public static int startSpamMgrService() {
+		int result = 0;
+		try {
+			Engine.spammgrth = new SpamMgrThread();
+			Thread th = new Thread(Engine.spammgrth);
+			th.start();
+		} catch (Exception e) {
+			Engine.getEngineLogger()
+					.log(Level.WARNING,
+							"mrspam task manager thread initialized error. Exit...",
+							e);
+			result = 4;
+			return result;
+		}
+
+		return result;
+	}
+
+	public static void stopSpamMgrService() {
+		if (Engine.spammgrth != null) {
+			Engine.spammgrth.setRunning(false);
+			Engine.spammgrth = null;
+		}
+	}
+
 	public static boolean StartupServerSocket() {
 		boolean status = false;
 		try {
@@ -222,6 +249,8 @@ public class Engine {
 	}
 
 	public static void TerminateSystem(int exitcode) {
+		Engine.stopSpamMgrService();
+		
 		Engine.terminateMysqlConnection();
 		Engine.TerminateServerSocket();
 
@@ -263,6 +292,12 @@ public class Engine {
 			}
 			System.out.println("There is already a mrspam running. Exit...");
 			Engine.TerminateSystem(3);
+		}
+
+		// start spam mgr service
+		status = Engine.startSpamMgrService();
+		if (status > 0) {
+			Engine.TerminateSystem(status);
 		}
 
 		getEngineLogger().log(Level.WARNING, "mrspam launch successfully...");

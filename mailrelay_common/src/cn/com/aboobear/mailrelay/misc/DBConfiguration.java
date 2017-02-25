@@ -10,7 +10,6 @@ public class DBConfiguration {
 	public String DBDATABASE = null;
 	public Logger logger = null;
 	public Level loglevel = Level.WARNING;
-	
 
 	public String getDBURL() {
 		return DBURL;

@@ -19,7 +19,7 @@ public class SpamMgrThread extends BaseThread {
 	private BlockingQueue<EmlItem> taskItems = null;
 	private long[] workingItemList = null;
 
-	public static String RETRIEVE_TASK_SQL = "select id from mr_smtp_task where status=" + Constants.MAIL_WAIT_SCAN;
+	public static String RETRIEVE_TASK_SQL = "select id from mr_smtp_task where status=" + Constants.WAIT_SCAN;
 	
 	public SpamMgrThread() throws Exception {
 		this.threadId = "SpamMgrThread";
