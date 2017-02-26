@@ -5,10 +5,14 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.mail.Session;
-import org.apache.commons.net.telnet.*;
 
+import xyz.capybara.clamav.ClamavClient;
+import xyz.capybara.clamav.commands.scan.result.ScanResult;
+import xyz.capybara.clamav.exceptions.ClamavException;
 import cn.com.aboobear.mailrelay.misc.BaseThread;
 import cn.com.aboobear.mailrelay.misc.SocketClient;
 
@@ -54,11 +58,11 @@ public class SpamThread extends BaseThread {
 	
 	private void SpamAndClam(EmlItem item){
 		Engine.getEngineLogger().log(Level.INFO, "start to porcess item:" + item.getFullEmlpath());
-		String clamHost = new StringBuilder(Configuration.SPAM_HOST).append(":").append(Configuration.CLAMD_PORT).toString();
 		SocketClient spamClient = new SocketClient(Configuration.SPAM_HOST, Configuration.LGSPAM_PORT);
+		String spamRes = null;
 		if(spamClient.connect()) {
 			try {
-				String command = new StringBuilder("score ").append(/*item.getFullEmlpath()).toString()*/ "/home/23/fd01a91c-4024-46c9-b404-3fb141545130").toString();
+				String command = new StringBuilder("score ").append(/*item.getFullEmlpath()).toString()*/ "/home/23/fd01a91c-4024-46c9-b404-3fb141545130\n").toString();
 				spamClient.send(command, "utf8");
 				Engine.getEngineLogger().log(Level.INFO, "send out command to "+ Configuration.SPAM_HOST + Configuration.LGSPAM_PORT +" with command:" + command);
 			} catch (Exception e) {
@@ -69,8 +73,8 @@ public class SpamThread extends BaseThread {
 						e);
 			}
 			try {
-				String res = spamClient.receive("utf8");
-				Engine.getEngineLogger().log(Level.INFO, "response from spam:" + res);
+				spamRes = spamClient.receive("utf8");
+				Engine.getEngineLogger().log(Level.INFO, "response from spam:" + spamRes);
 			} catch (Exception e) {
 				Engine.getEngineLogger()
 				.log(Level.INFO,
@@ -78,7 +82,39 @@ public class SpamThread extends BaseThread {
 								+ " -- meet error when get response from spam",
 						e);
 			}
+			/*try {
+				spamClient.send("quit\n", "utf8");
+				Engine.getEngineLogger().log(Level.INFO, "send quit to spam");
+			} catch (Exception e) {
+				Engine.getEngineLogger()
+				.log(Level.INFO,
+						this.threadId
+								+ " -- meet error when send quit command to spam",
+						e);
+			}
+			spamClient.close();*/
 		}
+		
+		//if(spamRes != null) {
+			//if(spamRes.toLowerCase().contains("good")) {
+				Engine.getEngineLogger().log(Level.INFO, "start clamav scan:" + spamRes);
+				ClamavClient client = new ClamavClient(Configuration.SPAM_HOST, Configuration.CLAMD_PORT);
+				Path path = Paths.get("/home/23/fd01a91c-4024-46c9-b404-3fb141545130");
+				try {
+					Engine.getEngineLogger().log(Level.INFO, "start clamav scan:" + path.toString());
+					ScanResult res = client.scan(path);
+					Engine.getEngineLogger().log(Level.INFO, "start clamav scan:" + res.getStatus());
+				} catch (ClamavException e) {
+					Engine.getEngineLogger()
+					.log(Level.INFO,
+							this.threadId
+									+ " -- meet error scan virus",
+							e);
+				}
+			//}
+		//} else {
+			
+		//}
 	}
 
 	@Override
