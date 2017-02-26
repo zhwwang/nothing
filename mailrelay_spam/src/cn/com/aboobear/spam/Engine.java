@@ -121,6 +121,24 @@ public class Engine {
 	public static String FormatDateStr() {
 		return SystemUtils.Format(Engine.dateFormat, new Date());
 	}
+	
+	public Engine() throws Exception {
+		boolean result = Configuration.readConfigConf();
+		
+		if (!result) {
+			throw new Exception("Fail to load configuration");
+		}
+
+		if (Engine.getEngineLogger() == null) {
+			throw new Exception("Fail to create engine log");
+		}
+
+		if (Engine.getSpamLogger() == null) {
+			throw new Exception("Fail to create spam log");
+		}
+		
+		Configuration.loadConfigFromDB();
+	}
 
 	public static boolean EstablishMysqlConnection(boolean force) {
 		if (Engine.connection == null || force) {
