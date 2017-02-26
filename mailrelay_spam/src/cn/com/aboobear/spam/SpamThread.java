@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 
 import javax.mail.Session;
+import org.apache.commons.net.telnet.*;
 
 import cn.com.aboobear.mailrelay.misc.BaseThread;
 import cn.com.aboobear.mailrelay.misc.SocketClient;
@@ -52,23 +53,30 @@ public class SpamThread extends BaseThread {
 	}
 	
 	private void SpamAndClam(EmlItem item){
+		Engine.getEngineLogger().log(Level.INFO, "start to porcess item:" + item.getFullEmlpath());
 		String clamHost = new StringBuilder(Configuration.SPAM_HOST).append(":").append(Configuration.CLAMD_PORT).toString();
-		SocketClient spamClient = new SocketClient(Configuration.SPAM_HOST, Configuration.SPAM_PORT);
+		SocketClient spamClient = new SocketClient(Configuration.SPAM_HOST, Configuration.LGSPAM_PORT);
 		if(spamClient.connect()) {
 			try {
-				spamClient.send(new StringBuilder("score ").append(/*item.getFullEmlpath()).toString()*/ "/home/23/fd01a91c-4024-46c9-b404-3fb141545130").toString(), "utf8");
-				Engine.getEngineLogger().log(Level.INFO, "send out command to spam" + Configuration.SPAM_HOST + ":" + Configuration.CLAMD_PORT);
+				String command = new StringBuilder("score ").append(/*item.getFullEmlpath()).toString()*/ "/home/23/fd01a91c-4024-46c9-b404-3fb141545130").toString();
+				spamClient.send(command, "utf8");
+				Engine.getEngineLogger().log(Level.INFO, "send out command to "+ Configuration.SPAM_HOST + Configuration.LGSPAM_PORT +" with command:" + command);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Engine.getEngineLogger()
+				.log(Level.INFO,
+						this.threadId
+								+ " -- meet error when send command to spam",
+						e);
 			}
 			try {
 				String res = spamClient.receive("utf8");
 				Engine.getEngineLogger().log(Level.INFO, "response from spam:" + res);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				Engine.getEngineLogger().log(Level.INFO, "error from spam");
+				Engine.getEngineLogger()
+				.log(Level.INFO,
+						this.threadId
+								+ " -- meet error when get response from spam",
+						e);
 			}
 		}
 	}
@@ -84,7 +92,7 @@ public class SpamThread extends BaseThread {
 				return;
 			} else {
 				Engine.getEngineLogger().log(Level.INFO,
-						this.threadId + " -- Started");
+						this.threadId + " -- Started. the status is:" + this.running);
 			}
 
 			while (this.running) {
@@ -92,7 +100,6 @@ public class SpamThread extends BaseThread {
 				this.workingItemId = 0;
 				try {
 					item = this.taskItems.take();
-					SpamAndClam(item);
 				} catch (InterruptedException ex) {
 					Engine.getEngineLogger()
 							.log(Level.INFO,
@@ -116,7 +123,7 @@ public class SpamThread extends BaseThread {
 				this.workingItemId = item.getId();
 
 				String emlpath_str = item.getEmlpath();
-
+				SpamAndClam(item);
 				Engine.getEngineLogger().log(Level.INFO,
 						this.threadId + " stop working on " + item.getId());
 

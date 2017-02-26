@@ -23,7 +23,7 @@ public class SpamMgrThread extends BaseThread {
 	
 	public SpamMgrThread() throws Exception {
 		this.threadId = "SpamMgrThread";
-		this.threadNumber = Configuration.THREADS_NUMBER;
+		this.threadNumber = 1;//Configuration.THREADS_NUMBER;
 		
 		this.taskService = Executors.newFixedThreadPool(this.threadNumber);
 		this.taskItems = new LinkedBlockingQueue<EmlItem>(
@@ -150,39 +150,40 @@ public class SpamMgrThread extends BaseThread {
 	public void run() {
 		int tcount = 0;
 		int term = 0;
+		Engine.getEngineLogger().log(Level.INFO,
+				this.threadId + " -- start spam thread manager");
 		boolean result = this.EstablishMysqlConnection(
-				Configuration.DBCONFIGURATION, false);
+				Configuration.DBCONFIGURATION, true);
 
 		if (!result) {
 			Engine.getEngineLogger().log(Level.WARNING,
 					this.threadId + " -- Fail to connect mysql database");
-			return;
 		} else {
 			Engine.getEngineLogger().log(Level.INFO,
 					this.threadId + " -- Started");
-		}
 
-		Engine.getEngineLogger().log(Level.WARNING,
-				this.threadId + " -- RETRIEVE_TASK_SQL:" + RETRIEVE_TASK_SQL);
-
-		this.StartTasks();
-
-		int rcount = (Configuration.ALIVE_DURATION * 60 * 1000)
-				/ Configuration.FETCH_TASK_INTERVAL;
-
-		while (this.running) {
-			tcount = this.taskItems.size();
-			if (tcount == 0) {
-				this.retrieveTasks(tcount);
-			}
-			try {
-				Thread.sleep(Configuration.FETCH_TASK_INTERVAL);
-			} catch (Exception e) {
-			}
-			
-			term++;
-			if (term > rcount) {
-				break;
+			Engine.getEngineLogger().log(Level.WARNING,
+					this.threadId + " -- RETRIEVE_TASK_SQL:" + RETRIEVE_TASK_SQL);
+	
+			this.StartTasks();
+	
+			int rcount = (Configuration.ALIVE_DURATION * 60 * 1000)
+					/ Configuration.FETCH_TASK_INTERVAL;
+	
+			while (this.running) {
+				tcount = this.taskItems.size();
+				if (tcount == 0) {
+					this.retrieveTasks(tcount);
+				}
+				try {
+					Thread.sleep(Configuration.FETCH_TASK_INTERVAL);
+				} catch (Exception e) {
+				}
+				
+				term++;
+				if (term > rcount) {
+					break;
+				}
 			}
 		}
 

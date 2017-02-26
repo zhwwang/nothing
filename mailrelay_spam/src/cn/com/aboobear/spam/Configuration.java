@@ -21,8 +21,8 @@ public class Configuration {
 	public static int LGSPAM_PORT = 32387;
 	public static int CLAMD_PORT = 32388;
 
-	public static Level LOGLEVEL = Level.WARNING;
-	public static Level SPAM_LOGLEVEL = Level.WARNING;
+	public static Level LOGLEVEL = Level.INFO;
+	public static Level SPAM_LOGLEVEL = Level.INFO;
 	public static String DBURL = null;
 	public static String DBUSERNAME = null;
 	public static String DBPASSWORD = null;
@@ -55,11 +55,11 @@ public class Configuration {
 					Configuration.getConfigurationPath()));
 			props.load(in);
 			String loglevel = props.getProperty("log_level");
-			if (loglevel.equals("all")) {
+			//if (loglevel.equals("all")) {
 				Configuration.LOGLEVEL = Level.INFO;
-			} else {
-				Configuration.LOGLEVEL = Level.WARNING;
-			}
+			//} else {
+			//	Configuration.LOGLEVEL = Level.WARNING;
+			//}
 			String tempstr = props.getProperty("spam_port");
 			if (tempstr != null && tempstr.length() > 0) {
 				Configuration.SPAM_PORT = Integer.parseInt(tempstr);
