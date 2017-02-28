@@ -13,6 +13,14 @@ import javax.mail.Session;
 import cn.com.aboobear.mailrelay.misc.BaseThread;
 import cn.com.aboobear.mailrelay.misc.SocketClient;
 
+/**
+ * @author tjuwzw
+ *
+ */
+/**
+ * @author tjuwzw
+ *
+ */
 @SuppressWarnings("unused")
 public class SpamThread extends BaseThread {
 	private BlockingQueue<EmlItem> taskItems = null;
@@ -53,43 +61,45 @@ public class SpamThread extends BaseThread {
 		return this.workingItemId;
 	}
 	
-	private void SpamAndClam(EmlItem item){
+	/*
+	 * return -1 if met error, return 0 if no spam and virus, return 1 if spam or virus.
+	 */
+	private int SpamAndClam(EmlItem item){
 		Engine.getEngineLogger().log(Level.INFO, "start to porcess item:" + item.getFullEmlpath());
 		SocketClient spamClient = new SocketClient(Configuration.SPAM_HOST, Configuration.LGSPAM_PORT);
 		String spamRes = null;
+		String clamavRes = null;
 		if(spamClient.connect()) {
 			try {
-				String command = new StringBuilder("score ").append(/*item.getFullEmlpath()).toString()*/ "/home/mailrelay/201702/23/fd01a91c-4024-46c9-b404-3fb141545130\n").toString();
+				String command = new StringBuilder("score ").append(item.getFullEmlpath()).append("\n").toString();
 				spamClient.send(command, "utf8");
 				Engine.getEngineLogger().log(Level.INFO, "send out command to "+ Configuration.SPAM_HOST + Configuration.LGSPAM_PORT +" with command:" + command);
 			} catch (Exception e) {
 				Engine.getEngineLogger()
-				.log(Level.INFO,
-						this.threadId
-								+ " -- meet error when send command to spam",
-						e);
+				.log(Level.INFO, this.threadId + " -- meet error when send command to spam", e);
+				spamClient.close();
+				return -1;
 			}
 			try {
 				spamRes = spamClient.receive("utf8");
 				Engine.getEngineLogger().log(Level.INFO, "response from spam:" + spamRes);
 			} catch (Exception e) {
 				Engine.getEngineLogger()
-				.log(Level.INFO,
-						this.threadId
-								+ " -- meet error when get response from spam",
-						e);
+				.log(Level.INFO,this.threadId+ " -- meet error when get response from spam",e);
+				spamClient.close();
+				return -1;
 			}
 			try {
 				spamClient.send("quit\n", "utf8");
 				Engine.getEngineLogger().log(Level.INFO, "send quit to spam");
 			} catch (Exception e) {
 				Engine.getEngineLogger()
-				.log(Level.INFO,
-						this.threadId
-								+ " -- meet error when send quit command to spam",
-						e);
+				.log(Level.INFO,this.threadId + " -- meet error when send quit command to spam",e);
 			}
 			spamClient.close();
+		} else {
+			spamClient.close();
+			return -1;
 		}
 		
 		if(spamRes != null) {
@@ -97,30 +107,46 @@ public class SpamThread extends BaseThread {
 				Engine.getEngineLogger().log(Level.INFO, "start clamav scan:" + spamRes);
 				SocketClient clamavClient = new SocketClient(Configuration.SPAM_HOST, Configuration.CLAMD_PORT);
 				if(clamavClient.connect()) {
-					String command = new StringBuilder("SCAN ").append(/*item.getFullEmlpath()).toString()*/ "/home/mailrelay/201702/23/fd01a91c-4024-46c9-b404-3fb141545130\n").toString(); 
+					String command = new StringBuilder("SCAN ").append(item.getFullEmlpath()).append("\n").toString(); 
 					try {
 						clamavClient.send(command, "utf8");
 					} catch (Exception e) {
 						Engine.getEngineLogger()
-						.log(Level.INFO,
-								this.threadId
-										+ " -- meet error when send command to clamav",
-								e);
+						.log(Level.INFO, this.threadId + " -- meet error when send command to clamav",e);
+						clamavClient.close();
+						return -1;
 					}
 					try {
-						String clamavRes = clamavClient.receive("utf8");
+						clamavRes = clamavClient.receive("utf8");
 						Engine.getEngineLogger().log(Level.INFO, "response from clamav:" + clamavRes);
 					} catch (Exception e) {
 						Engine.getEngineLogger()
-						.log(Level.INFO,
-								this.threadId
-										+ " -- meet error when get response from clamav",
-								e);
+						.log(Level.INFO,this.threadId + " -- meet error when get response from clamav",e);
+						clamavClient.close();
+						return -1;
 					}
+					spamClient.close();
+				} else {
+					spamClient.close();
+					return -1;
 				}
+			} else {
+				//TODO it is spam, do next.
+				return 1;
 			}
 		} else {
-			
+			return -1;
+		}
+		
+		if(clamavRes != null) {
+			if(clamavRes.toLowerCase().contains("ok")) {
+				return 0;
+			} else {
+				//TODO find virus by clamav. do next
+				return 1;
+			}
+		} else {
+			return -1;
 		}
 	}
 
@@ -145,20 +171,14 @@ public class SpamThread extends BaseThread {
 					item = this.taskItems.take();
 				} catch (InterruptedException ex) {
 					Engine.getEngineLogger()
-							.log(Level.INFO,
-									this.threadId
-											+ " -- meet InterruptedException",
-									ex);
+							.log(Level.INFO, this.threadId + " -- meet InterruptedException", ex);
 
 					if (!this.running) {
 						break;
 					}
 				} catch (Exception ex) {
 					Engine.getEngineLogger()
-							.log(Level.WARNING,
-									this.threadId
-											+ " -- Fail to take item from basket",
-									ex);
+					.log(Level.WARNING, this.threadId + " -- Fail to take item from basket", ex);
 				}
 				Engine.getEngineLogger().log(Level.INFO,
 						this.threadId + " start working on " + item.getId());
@@ -166,7 +186,11 @@ public class SpamThread extends BaseThread {
 				this.workingItemId = item.getId();
 
 				String emlpath_str = item.getEmlpath();
-				SpamAndClam(item);
+				
+				int ret = SpamAndClam(item);
+				if(ret == -1)
+					ret = SpamAndClam(item);
+				
 				Engine.getEngineLogger().log(Level.INFO,
 						this.threadId + " stop working on " + item.getId());
 

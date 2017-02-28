@@ -19,7 +19,7 @@ public class SpamMgrThread extends BaseThread {
 	private BlockingQueue<EmlItem> taskItems = null;
 	private long[] workingItemList = null;
 
-	public static String RETRIEVE_TASK_SQL = "select id from mr_smtp_task where status=" + Constants.WAIT_SCAN;
+	public static String RETRIEVE_TASK_SQL = "select id, sendfrom, domain, todomain, emlpath, hasattachment, title, mailsize from mr_smtp_task where status=" + Constants.WAIT_SCAN;
 	
 	public SpamMgrThread() throws Exception {
 		this.threadId = "SpamMgrThread";
@@ -121,6 +121,20 @@ public class SpamMgrThread extends BaseThread {
 				if (!used) {
 					EmlItem nitem = new EmlItem();
 					nitem.setId(pid);
+					String emlpath = resultSet.getString("emlpath");
+					nitem.setEmlpath(emlpath);
+					String sendfrom = resultSet.getString("sendfrom");
+					nitem.setSendfrom(sendfrom);
+					String domain = resultSet.getString("domain");
+					nitem.setDomain(domain);
+					String todomain = resultSet.getString("todomain");
+					nitem.setTodomain(todomain);
+					String title = resultSet.getString("title");
+					nitem.setTitle(title);
+					int hasattachment = resultSet.getInt("hasattachment");
+					nitem.setHasattachment(hasattachment);
+					long mailsize = resultSet.getLong("mailsize");
+					nitem.setMailsize(mailsize);
 
 					this.taskItems.put(nitem);
 				} else {
