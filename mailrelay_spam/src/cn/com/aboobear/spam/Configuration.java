@@ -7,10 +7,14 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import cn.com.aboobear.mailrelay.misc.DBConfiguration;
+
 
 public class Configuration {
 	private static String MR_CONFIGPATH = "/opt/share/longgerconf/mrspam.conf";
@@ -29,6 +33,9 @@ public class Configuration {
 	public static String DBDATABASE = null;
 	
 	public static DBConfiguration DBCONFIGURATION = new DBConfiguration();
+	public static HashMap<String, Policy> PolicyMap = null;
+	
+	public static List<Rule> RuleList = null;
 
 	public static int ALIVE_DURATION = 360;
 	
@@ -163,15 +170,75 @@ public class Configuration {
 		Statement statement = null;
 		ResultSet resultSet = null;
 		String query = null;
-		
-		query = "select * from mr_filterrule";
+		if(Configuration.RuleList == null) {
+			Configuration.RuleList = new ArrayList<Rule>();
+		}
+		if (Configuration.PolicyMap == null) {
+			Configuration.PolicyMap= new HashMap<String, Policy>();
+		}
+		query = "select * from mr_filterrule where status=1 order by id desc";
 		try {
 			statement = connection.createStatement();
 			resultSet = statement.executeQuery(query);
 
 			while (resultSet.next()) {
-				String ip = resultSet
-						.getString("ip");
+				int id = resultSet.getInt("id");
+				String filter_rule_name = resultSet.getString("filter_rule_name");
+				String condition = resultSet.getString("condition");
+				int actions = resultSet.getInt("actions");
+				String forward = resultSet.getString("forward");
+				int forward_keep_deliver = resultSet.getInt("forward_keep_deliver");
+				Rule rule = new Rule();
+				rule.setActions(actions);
+				rule.setCondition(condition);
+				rule.setForward(forward);
+				rule.setFowareanddeliver(forward_keep_deliver);
+				rule.setId(id);
+				rule.setName(filter_rule_name);
+				Engine.getEngineLogger().log(Level.INFO,
+						"mrspam -- get rule from db: id " + id + "name " + filter_rule_name);
+				RuleList.add(rule);
+			}
+		} catch (com.mysql.jdbc.exceptions.jdbc4.CommunicationsException ex1) {
+			throw ex1;
+		} catch (com.mysql.jdbc.CommunicationsException ex2) {
+			throw ex2;
+		} catch (Exception sqlex) {
+		} finally {
+			if (resultSet != null) {
+				resultSet.close();
+			}
+			if (statement != null) {
+				statement.close();
+			}			
+		}
+		
+		query = "select * from mr_policy where status=1";
+		try {
+			statement = connection.createStatement();
+			resultSet = statement.executeQuery(query);
+
+			while (resultSet.next()) {
+				int id = resultSet.getInt("id");
+				String domain = resultSet.getString("domain");
+				int antispam_policy = resultSet.getInt("antispam_policy");
+				int isolate_mode = resultSet.getInt("isolate_mode");
+				String forward_id = resultSet.getString("forward_id");
+				String mark_id = resultSet.getString("mark_id");
+				int kill_virus_mode = resultSet.getInt("kill_virus_mode");
+				int virus_process_mode = resultSet.getInt("virus_process_mode");
+				Policy policy = new Policy();
+				policy.setId(id);
+				policy.setDomain(domain);
+				policy.setAntispamPolicy(antispam_policy);
+				policy.setIsolateMode(isolate_mode);
+				policy.setForwardId(forward_id);
+				policy.setMarkId(mark_id);
+				policy.setKillVirusMode(kill_virus_mode);
+				policy.setVirusProcessMode(virus_process_mode);
+				Engine.getEngineLogger().log(Level.INFO,
+						"mrspam -- get policy from db: id " + id + "domain " + domain);
+				PolicyMap.put(domain, policy);		
 			}
 		} catch (com.mysql.jdbc.exceptions.jdbc4.CommunicationsException ex1) {
 			throw ex1;

@@ -145,10 +145,8 @@ public class SpamMgrThread extends BaseThread {
 			}
 
 			if (Configuration.LOGLEVEL == Level.INFO) {
-				Engine.getEngineLogger().log(
-						Level.INFO,
-						this.threadId + " -- RETRIEVE_TASK_SQL: " + sql
-								+ ", count: " + index + ", skip: " + skip);
+				Engine.getEngineLogger()
+				.log(Level.INFO, this.threadId + " -- RETRIEVE_TASK_SQL: " + sql + ", count: " + index + ", skip: " + skip);
 			}
 
 			if (dbresult != null) {
