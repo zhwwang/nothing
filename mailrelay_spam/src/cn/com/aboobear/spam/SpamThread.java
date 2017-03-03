@@ -305,12 +305,12 @@ public class SpamThread extends BaseThread {
 	private String generateAuditLog(Rule rule) {
 		StringBuffer audit_log = new StringBuffer();
 
-		audit_log.append("¸ÃÓÊ¼şÃüÖĞ¹æÔòµÄÃû³Æ£º").append(rule.getName())
-				.append("¡£Ö´ĞĞ¶¯×÷£º");
+		audit_log.append("è¯¥é‚®ä»¶å‘½ä¸­è§„åˆ™çš„åç§°ï¼š").append(rule.getName())
+				.append("ã€‚æ‰§è¡ŒåŠ¨ä½œï¼š");
 		int action = rule.getActions();
 		switch (action) {
 		case Configuration.ACTION_LEVEL_ADD_TO_FILTER_QUEUE:
-			audit_log.append("Ìí¼Óµ½¹ıÂË¶ÓÁĞ");
+			audit_log.append("æ·»åŠ åˆ°è¿‡æ»¤é˜Ÿåˆ—");
 			break;
 		case Configuration.ACTION_LEVEL_FORWARD:
 			// 1. update status to(INPROGRESS = 1). 2. copy
@@ -318,24 +318,24 @@ public class SpamThread extends BaseThread {
 			// audit.
 			String email = rule.getForward();
 			int flag = rule.getFowardanddeliver();
-			audit_log.append("×ª·¢µ½ÓÊÏä£º"+email);
+			audit_log.append("è½¬å‘åˆ°é‚®ç®±ï¼š"+email);
 			if(flag == 0){
-				audit_log.append(" ²»ÔÙÍ¶µİ");
+				audit_log.append(" ä¸å†æŠ•é€’");
 			} else if(flag == 1){
-				audit_log.append(" ²¢¼ÌĞøÍ¶µİ");
+				audit_log.append(" å¹¶ç»§ç»­æŠ•é€’");
 			}
 			break;
 		case Configuration.ACTION_LEVEL_ROMOVE:
-			audit_log.append("¶ªÆú");
+			audit_log.append("ä¸¢å¼ƒ");
 			break;
 		case Configuration.ACTION_LEVEL_REPORT:
-			audit_log.append("ÉÏ±¨¹ÜÀíÖĞĞÄ");
+			audit_log.append("ä¸ŠæŠ¥ç®¡ç†ä¸­å¿ƒ");
 			break;
 		case Configuration.ACTION_LEVEL_SEND:
-			audit_log.append("·ÅĞĞ");
+			audit_log.append("æ”¾è¡Œ");
 			break;
 		default:
-			audit_log.append("µÈ´ıÉóºË");
+			audit_log.append("ç­‰å¾…å®¡æ ¸");
 			break;
 		}
 		return audit_log.toString();
@@ -418,38 +418,38 @@ public class SpamThread extends BaseThread {
 			}
 			valueName = value;
 			if(match.equalsIgnoreCase("contain") || match.equalsIgnoreCase("part_match")) {
-				matchName =  "°üº¬";
+				matchName =  "åŒ…å«";
 			} else if(match.equalsIgnoreCase("not_contain") || match.equalsIgnoreCase("not_match")) {
-				matchName =  "²»°üº¬";
+				matchName =  "ä¸åŒ…å«";
 			} else if(match.equalsIgnoreCase("full_match")) {
-				matchName =  "µÈÓÚ";
+				matchName =  "ç­‰äº";
 			} else if(match.equalsIgnoreCase("gte")) {
-				matchName =  "´óÓÚ»òÕßµÈÓÚ";
+				matchName =  "å¤§äºæˆ–è€…ç­‰äº";
 			} else if(match.equalsIgnoreCase("lte")) {
-				matchName =  "Ğ¡ÓÚ»òÕßµÈÓÚ";
+				matchName =  "å°äºæˆ–è€…ç­‰äº";
 			}
 			if(field.equalsIgnoreCase("sender")) {
 				status = checkCondition(mail_from, match, value);
-				fieldName = "·¢ĞÅÈË";
+				fieldName = "å‘ä¿¡äºº";
 			} else if(field.equalsIgnoreCase("reveiver")) {
 				status = checkCondition(mail_to, match, value);
-				fieldName = "ÊÕĞÅÈË";
+				fieldName = "æ”¶ä¿¡äºº";
 			} else if(field.equalsIgnoreCase("senddomain")) {
 				status = checkCondition(mail_domain, match, value);
-				fieldName = "·¢ËÍÈËËùÔÚÓò";
+				fieldName = "å‘é€äººæ‰€åœ¨åŸŸ";
 			} else if(field.equalsIgnoreCase("recedomain")) {
 				status = checkCondition(mail_todomain, match, value);
-				fieldName = "ÊÕĞÅÈËËùÔÚÓò";
+				fieldName = "æ”¶ä¿¡äººæ‰€åœ¨åŸŸ";
 			} else if(field.equalsIgnoreCase("subject")) {
 				status = checkCondition(mail_title, match, value);
-				fieldName = "ĞÅ¼ş±êÌâ";
+				fieldName = "ä¿¡ä»¶æ ‡é¢˜";
 			} else if(field.equalsIgnoreCase("mailheader")) {
 				if(!got_mail_header) {
 					mail_header = getHeader(mail_path);
 					got_mail_header = true;
 				}
 				status = checkCondition(mail_header, match, value);
-				fieldName = "ĞÅ¼şÍ·";
+				fieldName = "ä¿¡ä»¶å¤´";
 			} else if(field.equalsIgnoreCase("fulltext")) {
 				status = checkCondition(mail_title, match, value);
 				if(!status) {
@@ -486,10 +486,10 @@ public class SpamThread extends BaseThread {
 					got_mail_content = true;
 				}
 				status = checkCondition(mail_content, match, value);
-				fieldName = "ĞÅ¼şÄÚÈİ";
+				fieldName = "ä¿¡ä»¶å†…å®¹";
 			} else if(field.equalsIgnoreCase("mailsize")) {
 				status = checkCondition(mail_size, match, value);
-				fieldName = "ĞÅ¼ş´óĞ¡";
+				fieldName = "ä¿¡ä»¶å¤§å°";
 			} else if(field.equalsIgnoreCase("attachname") && hasAttachment == 1) {
 				if(!got_mail_attachments) {
 					got_mail_attachments = true;
@@ -503,7 +503,7 @@ public class SpamThread extends BaseThread {
 						break;
 					}
 				}
-				fieldName = "¸½¼şÃû";
+				fieldName = "é™„ä»¶å";
 			} else if(field.equalsIgnoreCase("attachsize") && hasAttachment == 1) {
 				if(!got_mail_attachments) {
 					got_mail_attachments = true;
@@ -517,7 +517,7 @@ public class SpamThread extends BaseThread {
 						break;
 					}
 				}
-				fieldName = "¸½¼ş´óĞ¡";
+				fieldName = "é™„ä»¶å¤§å°";
 			} else if(field.equalsIgnoreCase("attachtype") && hasAttachment == 1) {
 				if(!got_mail_attachments) {
 					got_mail_attachments = true;
@@ -531,7 +531,7 @@ public class SpamThread extends BaseThread {
 						break;
 					}
 				}
-				fieldName = "¸½¼şÀàĞÍ";
+				fieldName = "é™„ä»¶ç±»å‹";
 			}
 			if(status)
 				break;
@@ -539,7 +539,7 @@ public class SpamThread extends BaseThread {
 		if(status) {
 			Engine.getEngineLogger().log(Level.INFO, "item id:" + item.getId() + "match the rule:" + rule.getId());
 			StringBuilder sb = new StringBuilder();
-			String log = sb.append("¸ÃÓÊ¼şÃüÖĞ¹æÔò:").append(rule.getId()).append(" ÒòÎª").append(fieldName).append(matchName).append(valueName).toString();
+			String log = sb.append("è¯¥é‚®ä»¶å‘½ä¸­è§„åˆ™:").append(rule.getId()).append(" å› ä¸º").append(fieldName).append(matchName).append(valueName).toString();
 			int action = rule.getActions();
 			result = 1;
 		}
