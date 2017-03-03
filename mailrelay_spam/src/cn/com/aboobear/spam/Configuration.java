@@ -36,6 +36,14 @@ public class Configuration {
 	public static HashMap<String, Policy> PolicyMap = null;
 	
 	public static List<Rule> RuleList = null;
+	public static String[] process_order = null;
+	public static String MR_DB_TABLE_PREFIX = "mr_";
+	
+	public static final int ACTION_LEVEL_ROMOVE = 1;// do nothing
+	public static final int ACTION_LEVEL_ADD_TO_FILTER_QUEUE = 2;// 
+	public static final int ACTION_LEVEL_FORWARD = 3;
+	public static final int ACTION_LEVEL_SEND = 4;
+	public static final int ACTION_LEVEL_REPORT = 5;
 
 	public static int ALIVE_DURATION = 360;
 	
@@ -132,6 +140,12 @@ public class Configuration {
 			DBCONFIGURATION.setDBPASSWORD(Configuration.DBPASSWORD);
 			DBCONFIGURATION.setLoglevel(Configuration.LOGLEVEL);
 			DBCONFIGURATION.setLogger(Engine.getEngineLogger());
+			
+			tempstr = props.getProperty("process_order");
+			if (tempstr == "" || tempstr == null) {
+				tempstr = "spam,clamav,filter";
+			}
+			process_order = tempstr.split(",");
 			
 			try {
 				in.close();

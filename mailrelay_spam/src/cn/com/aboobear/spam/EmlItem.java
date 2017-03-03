@@ -5,6 +5,7 @@ public class EmlItem {
 	private String emldir = Configuration.MAIN_STORAGE;
 	private String emlpath = null;
 	private String sendfrom = null;
+	private String sendTo = null;
 	private String domain = null;
 	private String todomain = null;
 	private String title = null;
@@ -85,5 +86,13 @@ public class EmlItem {
 
 	public void setSendfrom(String sendfrom) {
 		this.sendfrom = sendfrom;
+	}
+
+	public String getSendTo() {
+		return sendTo;
+	}
+
+	public void setSendTo(String sendTo) {
+		this.sendTo = sendTo;
 	}
 }
