@@ -342,20 +342,112 @@ public class SpamThread extends BaseThread {
 
 	}
 
-	private void updateMailStatus(int status, Rule rule, String ruledesc,
-			long tid, EmlItem smtpitem) {
-		String p_ruledesc = "";
+	private void updateFilterStatus(Rule rule, EmlItem item, String log) {
 		long ruleid = rule.getId();
 		int action = rule.getActions();
+		int flag = rule.getFowardanddeliver();
 		String rulename = rule.getName();
+		long id = item.getId();
+		int status = 0;
+		int state = 0;
+		switch(action) {
+		case 1:
+			state = 1;
+			status = 11;
+			break;
+		case 2:
+			state = 1;
+			status = 6;		
+			break;
+		case 3:
+			state = 1;
+			if(flag == 0) {
+				status = 6;
+			} else if(flag == 1) {
+				status = 0;
+			}
+			break;
+		case 4:
+			break;
+		default:
+			state = 0;
+			status = 1;
+			break;
+		}
 		
 		String update_sql = "update " + Configuration.MR_DB_TABLE_PREFIX
-				+ "smtp_task set status=" + status + ", ruleid=" + ruleid
-				+ ", action=" + action  + "' where id=" + tid;
+				+ "smtp_task set status=" + status + ", state=" + state 
+				//+ ", ruleid=" + ruleid + ", action=" + action
+				+ ", reason=" + log
+				+ "' where id=" + id;
 
 		this.Update(Configuration.DBCONFIGURATION, update_sql);
 
-		this.Info("auditor updateMailStatus:" + update_sql);
+		this.Info("auditor updateFilterStatus:" + update_sql);
+	}
+	
+	private void updateSpamStatus(Policy policy, EmlItem item, String log) {
+		int policy_id = policy.getAntispamPolicy();
+		int isolate_mode = policy.getIsolateMode();
+		long id = item.getId();
+		int status = 0;
+		int state = 0;
+		switch(isolate_mode) {
+		case 1:
+		case 2:
+			state = 1;
+			status = 6;		
+			break;
+		case 3:
+			state = 1;
+			status = 1;
+			break;
+		default:
+			break;
+		}
+		
+		String update_sql = "update " + Configuration.MR_DB_TABLE_PREFIX
+				+ "smtp_task set status=" + status + ", state=" + state 
+				//+ ", ruleid=" + ruleid + ", action=" + action
+				+ ", scanlog=" + log
+				+ "' where id=" + id;
+
+		this.Update(Configuration.DBCONFIGURATION, update_sql);
+
+		this.Info("auditor updateSpamStatus:" + update_sql);
+	}
+	
+	private void updateClamavStatus(Policy policy, EmlItem item, String log) {
+		int policy_id = policy.getAntispamPolicy();
+		int kill_virus_mode = policy.getKillVirusMode();
+		int virus_process_mode = policy.getVirusProcessMode();
+		long id = item.getId();
+		int status = 0;
+		int state = 0;
+		switch(virus_process_mode) {
+		case 1:
+		case 2:
+			state = 2;
+			status = 0;
+			break;
+		case 3:
+		case 4:
+			state = 2;
+			status = 11;
+			break;
+		default:
+			break;
+		}
+		
+		String update_sql = "update " + Configuration.MR_DB_TABLE_PREFIX
+				+ "smtp_task set status=" + status + ", state=" + state 
+				//+ ", ruleid=" + ruleid + ", action=" + action
+				+ ", scanlog=" + log
+				+ "' where id=" + id;
+
+		this.Update(Configuration.DBCONFIGURATION, update_sql);
+
+		this.Info("auditor updateClamavStatus:" + update_sql);
 	}
 	
 	private int filter(EmlItem item){
@@ -540,7 +632,7 @@ public class SpamThread extends BaseThread {
 			Engine.getEngineLogger().log(Level.INFO, "item id:" + item.getId() + "match the rule:" + rule.getId());
 			StringBuilder sb = new StringBuilder();
 			String log = sb.append("该邮件命中规则:").append(rule.getId()).append(" 因为").append(fieldName).append(matchName).append(valueName).toString();
-			int action = rule.getActions();
+			updateFilterStatus(rule, item, log);
 			result = 1;
 		}
 		return result;
@@ -564,6 +656,11 @@ public class SpamThread extends BaseThread {
 			Engine.getEngineLogger().log(Level.INFO, "no spam policy found for item:" + item.getId());
 			return 0;
 		}
+		if(policy.getAntispamPolicy() == 1) {
+			Engine.getEngineLogger().log(Level.INFO, "no need to do spam for:" + item.getId());
+			return 0;
+		}
+			
 		
 		SocketClient spamClient = new SocketClient(Configuration.SPAM_HOST, Configuration.LGSPAM_PORT);
 		String spamRes = null;
@@ -606,6 +703,7 @@ public class SpamThread extends BaseThread {
 				return 0;
 			} else {
 				//TODO it is spam, do next.
+				updateSpamStatus(policy, item, spamRes);
 				return 1;
 			}
 		} else {
@@ -660,6 +758,7 @@ public class SpamThread extends BaseThread {
 				return 0;
 			} else {
 				//TODO find virus by clamav. do next
+				updateClamavStatus(policy, item, clamavRes);
 				return 1;
 			}
 		} else {
